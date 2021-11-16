@@ -4,8 +4,27 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Post, Category,Tag
 from django.core.exceptions import PermissionDenied
 from django.utils.text import slugify
+from .forms import CommentForm
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
+
+def new_comment(request, pk):
+    if request.user.is_authenticated:
+        post = get_object_or_404(Post, pk=pk)
+        if request.method == 'POST':
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.post = post
+                comment.author = request.user
+                comment.save()
+                return redirect(comment.get_absolute_url())
+        else:
+            return redirect(post.get_absolute_url())
+    else:
+        raise PermissionDenied
+
 class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Post
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
@@ -91,6 +110,7 @@ class PostDetail(DetailView):
         context = super(PostDetail, self).get_context_data()
         context['categories'] = Category.objects.all()
         context['no_category_post_count'] = Post.objects.filter(category=None).count()
+        context['comment_form'] = CommentForm
         return context
     # post_detail.html이 불러와진다.
 
