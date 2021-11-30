@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  web:
+    build: .  # 현재 프로젝트 폴더에 있는 내용을 build 하겠다.
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./:/usr/src/app/
+    ports:
+      - 8000
+    env_file:
+      - ./.env.dev
